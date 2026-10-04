@@ -7,6 +7,47 @@ sub horasjs {
   # $caller in principle might not be defined.
   my $caller_flag = $caller || 0;
 
+  if ($officium =~ /^(?:P)?officium\.pl$/i) {
+    $output .= <<'PrintTag';
+(function () {
+  var key = 'divinum-officium-office-theme';
+  var media = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)');
+  var mode;
+  try { mode = localStorage.getItem(key); } catch (error) { /* Storage may be disabled. */ }
+  if (!['system', 'dark', 'light'].includes(mode)) mode = 'dark';
+
+  function updateOfficeTheme() {
+    var appearance = mode === 'system' ? (media && media.matches ? 'light' : 'dark') : mode;
+    document.documentElement.dataset.officeAppearance = appearance;
+    document.documentElement.dataset.officeTheme = mode;
+    var select = document.getElementById('office-theme-select');
+    if (select) select.value = mode;
+    document.querySelectorAll('.office-theme-switch button').forEach(function (button) {
+      button.setAttribute('aria-pressed', String(button.dataset.officeThemeChoice === mode));
+    });
+  }
+
+  window.setOfficeTheme = function (choice) {
+    if (!['system', 'dark', 'light'].includes(choice)) return;
+    mode = choice;
+    try { localStorage.setItem(key, mode); } catch (error) { /* Keep the current page in sync. */ }
+    updateOfficeTheme();
+  };
+  if (media) {
+    if (media.addEventListener) media.addEventListener('change', updateOfficeTheme);
+    else media.addListener(updateOfficeTheme);
+  }
+  window.addEventListener('storage', function (event) {
+    if (event.key !== key) return;
+    mode = ['system', 'dark', 'light'].includes(event.newValue) ? event.newValue : 'dark';
+    updateOfficeTheme();
+  });
+  document.addEventListener('DOMContentLoaded', updateOfficeTheme);
+  updateOfficeTheme();
+})();
+PrintTag
+  }
+
   if ($officium ne 'Pofficium.pl') {
     $output .= <<"PrintTag";
 
@@ -134,7 +175,6 @@ function callkalendar(mode) {
   document.forms[0].target = "_self"
   if (mode == 'kalendar') {
     document.forms[0].kmonth.value = 15;
-    document.forms[0].submit();
   }
   document.forms[0].submit();
 }

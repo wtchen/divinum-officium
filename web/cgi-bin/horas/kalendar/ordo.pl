@@ -158,7 +158,7 @@ sub html_header {
 <LABEL FOR="kyear" CLASS="offscreen">Year</LABEL>
 <INPUT TYPE="TEXT" ID="kyear" NAME="kyear" VALUE="$kyear" SIZE=4>
 <A HREF=# onclick="prevnext(-1)">&darr;</A>
-<INPUT TYPE="submit" NAME="SUBMIT" VALUE=" " onclick="document.forms[0].submit();">
+<INPUT TYPE="submit" NAME="SUBMIT" VALUE=" ">
 <A HREF=# onclick="prevnext(1)">&uarr;</A>
 &ensp;<A HREF=# onclick="setkm(14)">Totus</A>
 </P><P ALIGN="CENTER">

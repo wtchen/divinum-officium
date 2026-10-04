@@ -34,6 +34,9 @@ PrintTag
 
   $onload && ($onload = " onload=\"$onload\";");
 
+  # Reading/navigation pages should have replayable URLs in browser history.
+  # Popups and other scripts retain their existing POST forms.
+  my $form_method = $0 =~ /(?:officium|kalendar|missa)\.pl$/i ? 'get' : 'post';
   my $is_mobile = ($officium eq 'Pofficium.pl');
   my $viewport_tag = $is_mobile ? '  <META NAME="viewport" CONTENT="width=device-width, initial-scale=0.75">' : '';
   my $gf = our $glossfont;
@@ -52,7 +55,63 @@ $viewport_tag
   <META NAME="Copyright" CONTENT="Like GNU">
   <meta name="color-scheme" content="dark light">
   <STYLE>
-    /* https://www.30secondsofcode.org/css/s/offscreen/ */
+    :root {
+      --ink: #23211d;
+      --ink-soft: #5a564e;
+      --accent: #7c1f1f;
+      --line: rgba(35, 33, 29, 0.18);
+      --control-bg: #ffffff;
+      --control-line: rgba(35, 33, 29, 0.35);
+      --focus-ring: rgba(124, 31, 31, 0.3);
+    }
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+    body {
+      background: $dialogbackground;
+      color: var(--ink);
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
+    }
+    p {
+      color: var(--ink);
+    }
+    h1, h2 {
+      text-align: center;
+      font-weight: normal;
+      line-height: 1.35;
+      text-wrap: balance;
+    }
+    h2 {
+      margin-top: 4ex;
+      color: var(--accent);
+      font-size: 112%;
+      font-weight: bold;
+      font-style: italic;
+      letter-spacing: 0.01em;
+    }
+    a {
+      text-decoration-thickness: 0.08em;
+      text-underline-offset: 0.15em;
+    }
+    a:link { color: $link; }
+    a:visited { color: $visitedlink; }
+    a:hover {
+      text-decoration-thickness: 0.14em;
+    }
+    a:focus-visible {
+      border-radius: 2px;
+      outline: 2px solid var(--focus-ring);
+      outline-offset: 2px;
+    }
+    img {
+      max-width: 100%;
+    }
+    td {
+      border-color: var(--line);
+    }
+    ::selection {
+      background: rgba(124, 31, 31, 0.22);
+    }
     .offscreen {
       border: 0;
       clip: rect(0 0 0 0);
@@ -63,33 +122,274 @@ $viewport_tag
       position: absolute;
       width: 1px;
     }
-    h1, h2 {
-      text-align: center;
-      font-weight: normal;
-    }
-    h2 {
-      margin-top: 4ex;
-      color: maroon;
-      font-size: 112%;
-      font-weight: bold;
-      font-style: italic;
-    }
-    p {
-      color: black;
-    }
-    a:link { color: $link; }
-    a:visited { color: $visitedlink; }
-    body {
-      background: $dialogbackground;
-    }
     .contrastbg { background: white; }
-    .nigra { color: black; }
+    .nigra { color: var(--ink); }
+    input, select {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    input[type="text"], select {
+      background: var(--control-bg);
+      border: 1px solid var(--control-line);
+      border-radius: 6px;
+      color: var(--ink);
+      padding: 0.15em 0.45em;
+    }
+    input[type="text"]:focus-visible, select:focus-visible {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--focus-ring);
+      outline: none;
+    }
+    input[type="submit"] {
+      background: var(--control-bg);
+      border: 1px solid var(--control-line);
+      border-radius: 6px;
+      color: var(--ink);
+      cursor: pointer;
+      padding: 0.3em 0.9em;
+      transition: background-color 120ms ease, border-color 120ms ease;
+    }
+    input[type="submit"]:hover {
+      background: rgba(124, 31, 31, 0.07);
+      border-color: var(--accent);
+    }
+    input[type="submit"]:focus-visible {
+      outline: 2px solid var(--focus-ring);
+      outline-offset: 2px;
+    }
+    input[type="radio"], input[type="checkbox"] {
+      accent-color: var(--accent);
+    }
+    font[size="-1"] {
+      color: var(--ink-soft);
+      font-size: 0.83em;
+    }
     .lw .gloss { display: none; }
     body.interlinear-hint .lw { cursor: pointer; }
     body.interlinear-hint .lw.revealed .gloss { display: inline; font-size: 0.85em;${\($gloss_color ? " color: $gloss_color;" : '')} font-weight: $gloss_weight; font-style: $gloss_style; }
     body.interlinear-all .lw .gloss { display: inline; font-size: 0.85em;${\($gloss_color ? " color: $gloss_color;" : '')} font-weight: $gloss_weight; font-style: $gloss_style; }
     body.interlinear-all .lw.learned .gloss { display: none; }
     body.interlinear-all .lw { cursor: pointer; }
+    /* Office-only polish: retain tables, column widths and liturgical colors. */
+    /* Dark is the default; a light system preference overrides it below. */
+    body:has(form[action\$="officium.pl"]) {
+      --ink: #F3F4F4;
+      --ink-soft: color-mix(in srgb, #F3F4F4 78%, #2C2C2C);
+      --accent: color-mix(in srgb, #853953 40%, #F3F4F4);
+      --office-green: #94CCA4;
+      --office-blue: color-mix(in srgb, #612D53 35%, #F3F4F4);
+      --office-purple: color-mix(in srgb, #612D53 35%, #F3F4F4);
+      --office-link: color-mix(in srgb, #612D53 35%, #F3F4F4);
+      --office-link-visited: color-mix(in srgb, #853953 40%, #F3F4F4);
+      --office-page: #2C2C2C;
+      --office-surface: #2C2C2C;
+      --office-hover: color-mix(in srgb, #612D53 40%, #2C2C2C);
+      --line: color-mix(in srgb, #F3F4F4 24%, #2C2C2C);
+      --control-bg: #2C2C2C;
+      --control-ink: #F3F4F4;
+      --control-line: color-mix(in srgb, #F3F4F4 45%, #2C2C2C);
+      --focus-ring: var(--office-link);
+      background: var(--office-page);
+      color: var(--ink);
+      color-scheme: dark;
+    }
+    form[action\$="officium.pl"] {
+      --office-text-size: 1rem;
+      --office-small-size: 0.875rem;
+      --office-heading-size: 1.125rem;
+      --office-title-size: 1.25rem;
+      font-size: var(--office-text-size);
+      font-family: Georgia, "Times New Roman", serif;
+      line-height: 1.5;
+    }
+    form[action\$="officium.pl"] > p,
+    form[action\$="officium.pl"] h1,
+    form[action\$="officium.pl"] h2 {
+      margin-block: 1rem;
+      line-height: 1.5;
+      letter-spacing: normal;
+    }
+    form[action\$="officium.pl"] table[cellpadding="8"] > tbody > tr > td {
+      padding: 0.75rem;
+    }
+    form[action\$="officium.pl"] td > p {
+      margin-block: 0 0.75rem;
+    }
+    /* The transitional document's table defaults otherwise reset text metrics. */
+    form[action\$="officium.pl"] table {
+      font-family: inherit;
+      font-size: inherit;
+      line-height: inherit;
+      color: inherit;
+    }
+    form[action\$="officium.pl"] .contrastbg {
+      background: var(--office-surface);
+      color: var(--ink);
+    }
+    /* Replace the browser's beveled BORDER=1 with flat, shared hairlines. */
+    form[action\$="officium.pl"] table[border="1"][cellpadding="8"] {
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+    }
+    form[action\$="officium.pl"] table[border="1"][cellpadding="8"] > tbody > tr > :is(td, th) {
+      border: 1px solid var(--line);
+    }
+    form[action\$="officium.pl"] :is(h1, h2),
+    form[action\$="officium.pl"] :is(h1, h2) i,
+    form[action\$="officium.pl"] font:is([size="+1"], [size="4"]) i,
+    form[action\$="officium.pl"] > p > i:has(> a) {
+      font-style: normal;
+    }
+    form[action\$="officium.pl"] font[color="blue" i] {
+      color: var(--office-blue);
+    }
+    form[action\$="officium.pl"] font[color="purple" i] {
+      color: var(--office-purple);
+    }
+    form[action\$="officium.pl"] font[color="green" i] {
+      color: var(--office-green);
+    }
+    /* Presentation attributes do not inherit the surrounding CSS palette. */
+    form[action\$="officium.pl"] font[color="red" i],
+    form[action\$="officium.pl"] font[color="maroon" i] {
+      color: var(--accent);
+    }
+    /* Override only the legacy inline rubric/cross colors, not arbitrary styles. */
+    form[action\$="officium.pl"] span[style*="color:red" i],
+    form[action\$="officium.pl"] span[style*="color:maroon" i] {
+      color: var(--accent) !important;
+    }
+    form[action\$="officium.pl"] span.rubric-cross {
+      display: inline-block;
+      line-height: 1;
+      vertical-align: middle;
+    }
+    /* Replace legacy absolute/relative FONT sizes with one non-compounding scale. */
+    form[action\$="officium.pl"] font:not([size]) {
+      font-size: inherit;
+    }
+    form[action\$="officium.pl"] font[size="1"],
+    form[action\$="officium.pl"] font[size="2"],
+    form[action\$="officium.pl"] font[size="-1"] {
+      font-size: var(--office-small-size);
+    }
+    form[action\$="officium.pl"] font[size="3"] {
+      font-size: var(--office-text-size);
+    }
+    form[action\$="officium.pl"] font[size="4"],
+    form[action\$="officium.pl"] font[size="+1"] {
+      font-size: var(--office-heading-size);
+    }
+    form[action\$="officium.pl"] font[size="5"],
+    form[action\$="officium.pl"] font[size="+2"] {
+      font-size: var(--office-title-size);
+    }
+    form[action\$="officium.pl"] h1 {
+      font-size: var(--office-title-size);
+    }
+    form[action\$="officium.pl"] h2 {
+      font-size: var(--office-heading-size);
+    }
+    form[action\$="officium.pl"] :is(h1, h2) font[size] {
+      font-size: inherit;
+    }
+    form[action\$="officium.pl"] span[style*="font-size:82%" i] {
+      font-size: var(--office-small-size) !important;
+    }
+    /* Keep the in-cell navigation alongside the section's first line. */
+    form[action\$="officium.pl"] td > div[align="right" i]:has(> font[color="green" i]) {
+      float: right;
+      margin-inline-start: 0.75rem;
+      line-height: 1.5;
+    }
+    form[action\$="officium.pl"] div[align="right" i] > font[color="green" i] {
+      color: var(--ink-soft);
+    }
+    form[action\$="officium.pl"] a:link {
+      color: var(--office-link);
+    }
+    form[action\$="officium.pl"] a:visited {
+      color: var(--office-link-visited);
+    }
+    form[action\$="officium.pl"] :is(input[type="text"], input[type="submit"], input[type="button"], button, select, textarea) {
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: var(--office-small-size);
+      line-height: 1.5;
+      padding: 0.25rem 0.5rem;
+      margin-block: 0.25rem;
+      vertical-align: middle;
+      color: var(--control-ink);
+      background: var(--control-bg);
+      border: 1px solid var(--control-line);
+      border-radius: 4px;
+    }
+    form[action\$="officium.pl"] :is(input[type="submit"], input[type="button"], button):hover:not(:disabled) {
+      background: var(--office-hover);
+      border-color: var(--accent);
+    }
+    form[action\$="officium.pl"] :is(a, input, button, select, textarea):focus-visible {
+      outline: 2px solid var(--office-link);
+      outline-offset: 2px;
+      box-shadow: none;
+    }
+    /* Three-position appearance switch; the active segment slides between choices. */
+    form[action\$="officium.pl"] .office-theme-switch {
+      display: inline-grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      position: relative;
+      isolation: isolate;
+      width: 6rem;
+      height: 1.75rem;
+      box-sizing: border-box;
+      padding: 2px;
+      vertical-align: middle;
+      border: 1px solid var(--control-line);
+      border-radius: 999px;
+      background: var(--office-page);
+    }
+    form[action\$="officium.pl"] .office-theme-switch::before {
+      content: "";
+      position: absolute;
+      inset-block: 2px;
+      left: 2px;
+      width: calc((100% - 4px) / 3);
+      border-radius: 999px;
+      background: var(--office-link);
+      transition: transform 180ms ease;
+    }
+    html[data-office-theme="system"] .office-theme-switch::before { transform: translateX(100%); }
+    html[data-office-theme="dark"] .office-theme-switch::before { transform: translateX(0); }
+
+    html[data-office-theme="light"] .office-theme-switch::before { transform: translateX(200%); }
+    form[action\$="officium.pl"] .office-theme-switch button {
+      position: relative;
+      box-sizing: border-box;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      min-width: 0;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--ink);
+      line-height: 1;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: color 140ms ease, background-color 140ms ease, transform 140ms ease;
+    }
+    form[action\$="officium.pl"] .office-theme-switch button:hover:not(:disabled) {
+      border: 0;
+      background: var(--office-hover);
+      color: var(--accent);
+    }
+    form[action\$="officium.pl"] .office-theme-switch button[aria-pressed="true"] {
+      color: var(--office-page);
+    }
+
+    \@media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition: none !important;
+      }
+    }
 PrintTag
 
   if ($version =~ /Cist/) {
@@ -115,56 +415,85 @@ PrintTag
   if ($whitebground) {
     print <<"PrintTag";
     \@media (prefers-color-scheme: dark) {
+      :root {
+        --ink: #f1efe9;
+        --ink-soft: #c9c5bc;
+        --accent: #cf9a92;
+        --line: rgba(241, 239, 233, 0.2);
+        --control-bg: #2b2b2e;
+        --control-line: rgba(241, 239, 233, 0.35);
+        --focus-ring: rgba(207, 154, 146, 0.4);
+      }
       body {
-        background: black;
-        color: white;
+        background: #141312;
+        color: var(--ink);
       }
-      table { color: white; }
-      a:link { color: #AFAFFF; }
-      a:visited { color: #AFAFFF; }
-      p { color: white; }
+      table { color: var(--ink); }
+      a:link { color: #9db8f0; }
+      a:visited { color: #9db8f0; }
+      p { color: var(--ink); }
       .contrastbg {
-        background: #3F3F3F;
-        color: white;
+        background: #2a2a2d;
+        color: var(--ink);
       }
-      .nigra {  color: white;  }
-      }
+      .nigra { color: var(--ink); }
+    }
 PrintTag
   } else {
     print <<"PrintTag";
     \@media (prefers-color-scheme: dark) {
       body {
         background: $dialogbackground;
-        color: black;
+        color: #23211d;
       }
-      select {
-        background: lightgrey;
-        color: black;
-      }
-      input[type="select"] {
-        background: lightgrey;
-        color: black;
+      select, input[type="text"] {
+        background: #ffffff;
+        color: #23211d;
       }
       input[type="submit"] {
-        background: grey;
-        color: black;
+        background: #f2f2f2;
+        color: #23211d;
       }
-      input[type="text"] {
-        background: white;
-        color: black;
-      }
+    }
 PrintTag
   }
 
   my $mode = (our $interlinear) // 'disabled';
   my $interlinear_class = ($mode eq 'hint' || $mode eq 'all') ? qq( class="interlinear-$mode") : '';
   print <<"PrintTag";
+    html[data-office-appearance="light"] body:has(form[action\$="officium.pl"]) {
+        --ink: #2C2C2C;
+        --ink-soft: color-mix(in srgb, #2C2C2C 80%, #F3F4F4);
+        --accent: #853953;
+        --office-green: #257148;
+        --office-blue: #612D53;
+        --office-purple: #612D53;
+        --office-link: #612D53;
+        --office-link-visited: #853953;
+        --office-page: #F3F4F4;
+        --office-surface: #F3F4F4;
+        --office-hover: color-mix(in srgb, #853953 12%, #F3F4F4);
+        --line: color-mix(in srgb, #2C2C2C 25%, #F3F4F4);
+        --control-bg: #F3F4F4;
+        --control-ink: #2C2C2C;
+        --control-line: #612D53;
+        --focus-ring: #612D53;
+        background: var(--office-page);
+        color: var(--ink);
+        color-scheme: light;
+    }
   </STYLE>
   <TITLE>$title</TITLE>
 $horasjs
+<SCRIPT TYPE="text/javascript">
+  document.addEventListener('click', function(event) {
+    var link = event.target.closest && event.target.closest('a[href="#"][onclick]');
+    if (link) event.preventDefault();
+  }, true);
+</SCRIPT>
 </HEAD>
 <BODY$interlinear_class $onload onresize="layoutChant()">
-<FORM ACTION="$officium" METHOD="post" TARGET="_self">
+<FORM ACTION="$officium" METHOD="$form_method" TARGET="_self">
 PrintTag
 }
 
@@ -496,7 +825,9 @@ sub getcookie1 {
 # + is "make a cross over the forehead and abdomen: cross yourself"
 # This version uses Unicode entities instead of small GIFs.
 sub setcross {
-  $_[0] =~ s/ (\+{1,3}) /" <span style='color:red; font-size:1.25em'>" .
+  $_[0] =~ s/ (\+{1,3}) /" <span" .
+                          ($nofancychars || $1 eq '++' ? '' : " class='rubric-cross'") .
+                          " style='color:red; font-size:1.25em'>" .
                           ($nofancychars ? $1 : $1 eq '+++' ? '✙︎' :
                                                 $1 eq '++' ? '+' : '✠') .
                           "<\/span> "/ger;

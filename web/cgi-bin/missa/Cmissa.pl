@@ -195,7 +195,7 @@ PrintTag
   ordo();
   print <<"PrintTag";
 <P ALIGN=CENTER>
-<INPUT TYPE=submit NAME='button' VALUE='Æquiparantia persoluta' onclick="okbutton();">
+<INPUT TYPE=submit NAME='button' VALUE='Æquiparantia persoluta' onclick="okbutton(); return false;">
 </P>
 <INPUT TYPE=HIDDEN NAME=expandnum VALUE="">
 <INPUT TYPE=HIDDEN NAME=popup VALUE="">
@@ -274,7 +274,7 @@ sub headline {
 <LABEL FOR=date CLASS=offscreen>Date</LABEL>
 <INPUT ID=date TYPE=TEXT NAME=date VALUE="$date1" SIZE=10>
 <A HREF=# onclick="prevnext(-1)">&darr;</A>
-<INPUT TYPE=submit NAME=SUBMIT VALUE=" " onclick="parchange();">
+<INPUT TYPE=submit NAME=SUBMIT VALUE=" " onclick="parchange(); return false;">
 <A HREF=# onclick="prevnext(1)">&uarr;</A>
 </P>
 PrintTag

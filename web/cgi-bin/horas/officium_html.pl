@@ -13,6 +13,16 @@ sub html_dayhead_c {
     . '</TR></TABLE>';
 }
 
+sub office_theme_switch {
+  return <<'PrintTag';
+<SPAN CLASS="office-theme-switch" ROLE="group" ARIA-LABEL="Office appearance">
+<BUTTON TYPE="button" DATA-OFFICE-THEME-CHOICE="dark" ARIA-PRESSED="false" ARIA-LABEL="Dark mode" TITLE="Dark mode" ONCLICK="setOfficeTheme('dark')"><SPAN ARIA-HIDDEN="true">&#9790;</SPAN></BUTTON>
+<BUTTON TYPE="button" DATA-OFFICE-THEME-CHOICE="system" ARIA-PRESSED="false" ARIA-LABEL="Use system appearance" TITLE="Use system appearance" ONCLICK="setOfficeTheme('system')"><SPAN ARIA-HIDDEN="true">&#9681;</SPAN></BUTTON>
+<BUTTON TYPE="button" DATA-OFFICE-THEME-CHOICE="light" ARIA-PRESSED="false" ARIA-LABEL="Light mode" TITLE="Light mode" ONCLICK="setOfficeTheme('light')"><SPAN ARIA-HIDDEN="true">&#9728;</SPAN></BUTTON>
+</SPAN>
+PrintTag
+}
+
 #*** headline($head) prints headline for main and pray
 sub headline {
   my ($head, $variant, $version1, $version2) = @_;
@@ -27,6 +37,7 @@ sub headline {
     $compone = '<A HREF="#" onclick="callcompare()">Compare</A>';
   }
   my $output = par_c($head);
+  my $theme_switch = office_theme_switch();
   return $output if our $content;
 
   $output .=
@@ -42,11 +53,9 @@ sub headline {
 
   if ($variant eq 'P') {
     $output .= par_c(<<"PrintTag");
-<A HREF="Pofficium.pl?date1=$date1&command=prev&version=$version&lang2=$lang2&votive=$votive">
-&darr;</A>
+<A HREF="Pofficium.pl?date1=$date1&command=prev&version=$version&lang2=$lang2&votive=$votive" aria-label="Previous day" title="Previous day">&larr;</A>
 $date1
-<A HREF="Pofficium.pl?date1=$date1&command=next&version=$version&lang2=$lang2&votive=$votive">
-&uarr;</A>
+<A HREF="Pofficium.pl?date1=$date1&command=next&version=$version&lang2=$lang2&votive=$votive" aria-label="Next day" title="Next day">&rarr;</A>
 &ensp;
 <!-- interlinear controls (re-enable in officium_html.pl if needed)
 <A HREF="#" id="interlinear-toggle" onclick="toggleInterlinear()">${\(our $interlinear ? 'Interlinear: on' : 'Interlinear: off')}</A>
@@ -60,23 +69,24 @@ $compone
 &ensp;
 <A HREF="#" onclick="callmissa();">Sancta Missa</A>
 &ensp;
-<LABEL FOR="date" CLASS="offscreen">Date</LABEL>
-<INPUT TYPE="TEXT" ID="date" NAME="date" VALUE="$date1" SIZE="10">
-<A HREF="#" onclick="prevnext(-1)">&darr;</A>
-<INPUT TYPE="submit" NAME="SUBMIT" VALUE=" " onclick="parchange();">
-<A HREF="#" onclick="prevnext(1)">&uarr;</A>
-&ensp;
 <A HREF="#" onclick="callkalendar();">Ordo</A>
 &ensp;
 <A HREF="#" onclick="callkalendar('kalendar');">Kalendarium</A>
 &ensp;
-<A HREF="#" onclick="pset('parameters')">Options</A>
+<A HREF="#" onclick="pset('parameters')">Options</A>&ensp;$theme_switch
 &ensp;
 <!-- interlinear controls (re-enable in officium_html.pl if needed)
 <A HREF="#" id="interlinear-toggle" onclick="toggleInterlinear()">${\(our $interlinear ? 'Interlinear: on' : 'Interlinear: off')}</A>
 &ensp;
 <A HREF="#" onclick="resetLearnedWords()">Reset learned</A>
 -->
+PrintTag
+    $output .= par_c(<<"PrintTag");
+<A HREF="#" onclick="prevnext(-1); return false;" aria-label="Previous day" title="Previous day">&larr;</A>
+<LABEL FOR="date" CLASS="offscreen">Date</LABEL>
+<INPUT TYPE="TEXT" ID="date" NAME="date" VALUE="$date1" SIZE="10">
+<A HREF="#" onclick="prevnext(1); return false;" aria-label="Next day" title="Next day">&rarr;</A>
+<INPUT TYPE="submit" NAME="SUBMIT" VALUE="Change Date" onclick="parchange(); return false;">
 PrintTag
   }
 }
@@ -133,6 +143,7 @@ for(i=0; i<thisform.elements.length; i++) {
 }
 thisform.target = "_self";
 thisform.submit();
+return false;
 SubmitTag
 
   $output .= par_c("<INPUT TYPE=SUBMIT VALUE='Procede' ONCLICK='$submit'>");
@@ -140,9 +151,10 @@ SubmitTag
 
 # for Pofficium Options Sancta Missa Ordo
 sub pmenu {
+  my $theme_switch = office_theme_switch();
   return <<"PrintTag";
 <A HREF="Pofficium.pl?date1=$date1&command=setupparameters&pcommand=$command&version=$version&lang2=$lang2&votive=$votive">
-Options</A>&ensp;
+Options</A>&ensp;$theme_switch&ensp;
 <A HREF="#" onclick="callmissa();">Sancta Missa</A>&ensp;
 <A HREF="#" onclick="callkalendar();">Ordo</A>
 PrintTag

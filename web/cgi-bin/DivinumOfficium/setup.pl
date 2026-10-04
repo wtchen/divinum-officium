@@ -77,7 +77,7 @@ sub savesetup {
 # labelstring~>$default~>type~>mode~>condition
 
 sub setuptable {
-  my ($command, $title) = @_;
+  my ($command, $title, $extra_row) = @_;
   $title =~ s/setupparameters/Options/i;
 
   my $output = <<"PrintTag";
@@ -114,6 +114,7 @@ PrintTag
     $output .= htmlInput("I$parpos", $parvalue, $parmode, $parpar, $parfunc, $parhelp);
     $output .= "</TD></TR>\n";
   }
+  $output .= $extra_row // '';
   $output .= <<"PrintTag";
 </TABLE>
 <P ALIGN=CENTER>

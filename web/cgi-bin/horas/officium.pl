@@ -221,7 +221,15 @@ htmlHead("Divinum Officium " . ($hora || $command), $officium ne 'Pofficium.pl' 
 
 if ($command =~ /setup(.*)/i) {
   $command = $1;
-  print setuptable($command, "Divinum Officium setup");
+  my $office_theme_row = $command eq 'parameters' ? <<'PrintTag' : '';
+<TR><TD ALIGN=left><LABEL FOR="office-theme-select">Office appearance (this browser)</LABEL> : </TD>
+<TD ALIGN=right><SELECT ID="office-theme-select" ONCHANGE="setOfficeTheme(this.value)">
+<OPTION VALUE="system">System</OPTION>
+<OPTION VALUE="dark" SELECTED>Dark</OPTION>
+<OPTION VALUE="light">Light</OPTION>
+</SELECT></TD></TR>
+PrintTag
+  print setuptable($command, "Divinum Officium setup", $office_theme_row);
   $command = "change" . $command . strictparam('pcommand');
 } else {
   print headline($html_dayhead, substr($officium, 0, 1), $version, $version2);
@@ -255,7 +263,7 @@ if ($command =~ /setup(.*)/i) {
       exit if $content;
 
       if ($officium ne 'Pofficium.pl' && @horas == 1) {
-        print par_c("<INPUT TYPE='SUBMIT' VALUE='$hora persolut.' onclick='okbutton();'>");
+        print par_c("<INPUT TYPE='SUBMIT' VALUE='$hora persolut.' onclick='okbutton(); return false;'>");
       }
     } elsif ($officium ne 'Pofficium.pl') {
       print par_c(mainpage());
